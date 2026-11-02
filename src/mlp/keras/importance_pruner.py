@@ -28,7 +28,7 @@ Main entry points:
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional, Sequence, Tuple
+from collections.abc import Sequence
 
 import networkx as nx
 import numpy as np
@@ -51,10 +51,10 @@ class HiddenWeightTracker(tf.keras.callbacks.Callback):
         ``None`` records every epoch.
     """
 
-    def __init__(self, record_epochs: Optional[int] = None):
+    def __init__(self, record_epochs: int | None = None):
         super().__init__()
         self.record_epochs = record_epochs
-        self.snapshots: List[List[np.ndarray]] = []
+        self.snapshots: list[list[np.ndarray]] = []
 
     def on_epoch_end(self, epoch, logs=None):
         if self.record_epochs is not None and epoch >= self.record_epochs:
@@ -63,7 +63,7 @@ class HiddenWeightTracker(tf.keras.callbacks.Callback):
         self.snapshots.append([l.get_weights()[0].copy() for l in hidden])
 
 
-def _hidden_dense_layers(model: Sequential) -> List[tf.keras.layers.Layer]:
+def _hidden_dense_layers(model: Sequential) -> list[tf.keras.layers.Layer]:
     """
     Return only the hidden Dense layers (skip input & output).
 
@@ -93,7 +93,7 @@ def _hidden_dense_layers(model: Sequential) -> List[tf.keras.layers.Layer]:
     return dense_layers[:-1]
 
 
-def _hidden_layer_names(model: Sequential) -> List[str]:
+def _hidden_layer_names(model: Sequential) -> list[str]:
     """
     Return the names of the hidden Dense layers (skip input & output).
 
@@ -161,7 +161,7 @@ def _minmax(x: np.ndarray) -> np.ndarray:
     return (x - lo) / (hi - lo) if hi > lo else np.zeros_like(x)
 
 
-def _incident_abs_weights(G: nx.DiGraph, node: str) -> List[float]:
+def _incident_abs_weights(G: nx.DiGraph, node: str) -> list[float]:
     """
     Absolute weights on all edges incident to ``node`` (in + out).
 
@@ -180,7 +180,7 @@ def _incident_abs_weights(G: nx.DiGraph, node: str) -> List[float]:
 
     if node not in G:
         return []
-    ws: List[float] = []
+    ws: list[float] = []
     for u in G.predecessors(node):
         ws.append(abs(float(G[u][node]["weight"])))
     for v in G.successors(node):
@@ -190,7 +190,7 @@ def _incident_abs_weights(G: nx.DiGraph, node: str) -> List[float]:
 
 def _strength_and_concentration(
     G: nx.DiGraph, prefix: str, j: int
-) -> Tuple[float, float]:
+) -> tuple[float, float]:
     """
     Total incident absolute weight (strength) and max/sum concentration.
 
@@ -220,11 +220,11 @@ def _strength_and_concentration(
 
 
 def temporal_metrics(
-    snapshots: List[List[np.ndarray]],
+    snapshots: list[list[np.ndarray]],
     ec_weight: float = 0.50,
     dc_weight: float = 0.25,
     bc_weight: float = 0.25,
-) -> Dict[int, Tuple[np.ndarray, np.ndarray, np.ndarray]]:
+) -> dict[int, tuple[np.ndarray, np.ndarray, np.ndarray]]:
     """
     Computes per-hidden-layer strength, concentration, and centrality trajectories.
 
@@ -245,7 +245,7 @@ def temporal_metrics(
     """
 
     n_hidden = len(snapshots[0])
-    per_layer: Dict[int, Tuple[list, list, list]] = {
+    per_layer: dict[int, tuple[list, list, list]] = {
         i: ([], [], []) for i in range(n_hidden)
     }
 
@@ -288,7 +288,7 @@ def temporal_metrics(
 def temporal_importance(
     strengths: np.ndarray,
     centralities: np.ndarray,
-    concentrations: Optional[np.ndarray] = None,
+    concentrations: np.ndarray | None = None,
     w_strength: float = 0.2,
     w_plasticity: float = 0.3,
     w_centrality: float = 0.2,
@@ -349,9 +349,9 @@ def temporal_importance(
 
 
 def compute_all_importance(
-    snapshots: List[List[np.ndarray]],
+    snapshots: list[list[np.ndarray]],
     **kwargs,
-) -> Dict[int, np.ndarray]:
+) -> dict[int, np.ndarray]:
     """
     Computes importance for each hidden layer, returning ``{hidden_layer_idx: importance_vector}``.
 
@@ -402,7 +402,7 @@ def select_weak(importance: np.ndarray, prune_ratio: float = 0.2) -> np.ndarray:
 
 def prune_neurons(
     model: Sequential,
-    layer_neuron_indices: Dict[str, np.ndarray],
+    layer_neuron_indices: dict[str, np.ndarray],
 ) -> None:
     """
     Zero all incoming/outgoing weights of selected neurons per layer.
@@ -443,9 +443,9 @@ def prune_neurons(
 
 
 def compute_edge_importance(
-    snapshots: List[List[np.ndarray]],
-    importance_dict: Dict[int, np.ndarray],
-) -> Dict[str, np.ndarray]:
+    snapshots: list[list[np.ndarray]],
+    importance_dict: dict[int, np.ndarray],
+) -> dict[str, np.ndarray]:
     """
     Importance-weighted edge importance summed over epochs.
 
@@ -468,7 +468,7 @@ def compute_edge_importance(
 
     n_hidden = len(snapshots[0])
     W_arrays = {i: np.array([ep[i] for ep in snapshots]) for i in range(n_hidden)}
-    importance: Dict[str, np.ndarray] = {}
+    importance: dict[str, np.ndarray] = {}
 
     for layer_idx in range(n_hidden):
         W = W_arrays[layer_idx]  # (T, fan_in, fan_out)
@@ -491,7 +491,7 @@ class HardMaskCallback(tf.keras.callbacks.Callback):
     Re-apply binary kernel masks after each train batch so pruned weights stay zero.
     """
 
-    def __init__(self, model: Sequential, kernel_masks: Dict[int, np.ndarray]):
+    def __init__(self, model: Sequential, kernel_masks: dict[int, np.ndarray]):
         super().__init__()
         self._hidden = _hidden_dense_layers(model)
         if len(self._hidden) != len(kernel_masks):
@@ -504,7 +504,7 @@ class HardMaskCallback(tf.keras.callbacks.Callback):
                 f"kernel_masks has {len(kernel_masks)} layers; "
                 f"model has {len(self._hidden)} hidden Dense layers."
             )
-        self._kernel_masks: Dict[int, np.ndarray] = {}
+        self._kernel_masks: dict[int, np.ndarray] = {}
         for i, layer in enumerate(self._hidden):
             W, _ = layer.get_weights()
             m = np.asarray(kernel_masks[i])
@@ -527,11 +527,11 @@ class HardMaskCallback(tf.keras.callbacks.Callback):
 
 def prune_edges_unstructured(
     model: Sequential,
-    importance: Dict[int, np.ndarray],
+    importance: dict[int, np.ndarray],
     prune_ratio: float = 0.2,
     *,
     hard_masking: bool = False,
-) -> Tuple[Sequential, int, int, float, Optional[Dict[int, np.ndarray]]]:
+) -> tuple[Sequential, int, int, float, dict[int, np.ndarray] | None]:
     """
     Zero the lowest-importance edges across all hidden layers, on a copy of the model.
 
@@ -554,7 +554,7 @@ def prune_edges_unstructured(
     total = len(all_scores)
     threshold = np.percentile(all_scores, prune_ratio * 100)
 
-    kernel_masks: Optional[Dict[int, np.ndarray]] = {} if hard_masking else None
+    kernel_masks: dict[int, np.ndarray] | None = {} if hard_masking else None
     n_pruned = 0
     for i, layer in enumerate(hidden):
         W, b = layer.get_weights()
@@ -596,7 +596,7 @@ def _surviving_mask(layer: tf.keras.layers.Layer) -> np.ndarray:
 
 def reconstruct(
     model: Sequential,
-    compile_kwargs: Optional[dict] = None,
+    compile_kwargs: dict[str, object] | None = None,
 ) -> Sequential:
     """
     Return a new, narrower Sequential model without dead hidden neurons.
@@ -631,7 +631,7 @@ def reconstruct(
     hidden = dense_layers[:-1]
     output_layer = dense_layers[-1]
 
-    alive_masks: List[np.ndarray] = []
+    alive_masks: list[np.ndarray] = []
     for i, layer in enumerate(hidden):
         W_in = layer.get_weights()[0]
         col_alive = np.any(W_in != 0, axis=0)
@@ -692,9 +692,9 @@ def reconstruct(
 
 def prune_edges_structured(
     model: Sequential,
-    importance: Dict[int, np.ndarray],
+    importance: dict[int, np.ndarray],
     prune_ratio: float = 0.2,
-) -> Tuple[Sequential, int, int, int]:
+) -> tuple[Sequential, int, int, int]:
     """
     Prune edges in a structured manner, preserving the overall structure of the model.
 

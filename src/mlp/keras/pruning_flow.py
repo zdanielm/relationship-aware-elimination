@@ -10,19 +10,14 @@ from __future__ import annotations
 import logging
 import random
 import sys
+from collections.abc import Callable
 from itertools import chain
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Literal, Optional, Tuple
+from typing import Any, Literal
 
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-from sklearn.metrics import confusion_matrix
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from tensorflow.keras.models import Sequential
-from tqdm.auto import tqdm
-
 from importance_pruner import (
     HardMaskCallback,
     HiddenWeightTracker,
@@ -30,6 +25,12 @@ from importance_pruner import (
     compute_edge_importance,
     prune_edges_unstructured,
 )
+from sklearn.metrics import confusion_matrix
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from tensorflow.keras.models import Sequential
+from tqdm.auto import tqdm
+
 from utils.logging_utils import log_or_print, setup_logger
 
 _NUMERIC_METRIC_KEYS = (
@@ -66,7 +67,7 @@ def capture_metrics(
     X: np.ndarray,
     y: np.ndarray,
     label: Literal["full", "pruned"],
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Evaluate + confusion matrix + weight sparsity.
 
@@ -130,8 +131,8 @@ def run_pruning_seeded_benchmark(
     prune_ratio: float = 0.2,
     hard_masking: bool = False,
     fit_verbose: int = 0,
-    fitness_kw: Optional[Dict[str, Any]] = None,
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    fitness_kw: dict[str, Any] | None = None,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     For each seed: runs a training of a full model, a pruned one (train + prune + fine-tune),
     and collects test metrics. Aggregates across seeds, to reduce the effect of random noise of evaluation.
@@ -184,8 +185,8 @@ def run_pruning_seeded_benchmark(
     )  # epochs for training the models
     fitness_kw = dict(fitness_kw or {})
 
-    full_rows: List[Dict[str, Any]] = []
-    pruned_rows: List[Dict[str, Any]] = []
+    full_rows: list[dict[str, Any]] = []
+    pruned_rows: list[dict[str, Any]] = []
 
     updates_per_seed = 5
     total_updates = n_seeds * updates_per_seed  # 5 updates per seed
@@ -272,7 +273,7 @@ def run_pruning_seeded_benchmark(
         del full_model, phase1_model, pruned_clone, fine_tune_model
         tf.keras.backend.clear_session()
 
-    per_seed_records: List[Dict[str, Any]] = []
+    per_seed_records: list[dict[str, Any]] = []
     for seed, (fr, pr_) in enumerate(
         tqdm(
             zip(full_rows, pruned_rows),
@@ -280,7 +281,7 @@ def run_pruning_seeded_benchmark(
             desc="Saving Per Seed DataFrame",
         )
     ):
-        row: Dict[str, Any] = {"seed": seed}
+        row: dict[str, Any] = {"seed": seed}
         for k in _NUMERIC_METRIC_KEYS:
             row[f"full_{k}"] = fr[k]
             row[f"pruned_{k}"] = pr_[k]
@@ -291,7 +292,7 @@ def run_pruning_seeded_benchmark(
 
     per_seed_df = pd.DataFrame(per_seed_records)
 
-    summary_records: List[Dict[str, Any]] = []
+    summary_records: list[dict[str, Any]] = []
     for k in tqdm(
         chain(_NUMERIC_METRIC_KEYS, _COUNT_KEYS),
         total=len(_NUMERIC_METRIC_KEYS) + len(_COUNT_KEYS),

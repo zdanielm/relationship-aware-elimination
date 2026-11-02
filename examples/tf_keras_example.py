@@ -4,7 +4,7 @@ from tensorflow.keras.layers import Dense
 from tensorflow.keras.metrics import AUC, Precision, Recall
 from tensorflow.keras.optimizers import Adam
 
-from src.pruning_flow import run_pruning_seeded_benchmark
+from src.mlp.keras.pruning_flow import run_pruning_seeded_benchmark
 
 # --- Synthetic demo data ---
 X = np.random.uniform(-1, 1, (1000, 2))
@@ -54,7 +54,7 @@ print("## Summary DataFrame: ##")
 print("########################")
 print(summary_df)
 
-print("")
+print()
 
 print("#########################")
 print("## Per-Seed DataFrame: ##")

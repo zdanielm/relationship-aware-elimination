@@ -36,7 +36,10 @@ import tensorflow as tf
 from tensorflow.keras.layers import Dense, Input
 from tensorflow.keras.models import Sequential, clone_model
 
-from utils.logging_utils import log_or_print
+try:
+    from utils.logging_utils import log_or_print
+except ImportError:
+    from src.utils.logging_utils import log_or_print
 
 _CENTRALITY_METRIC_KEYS = frozenset({"ec_weight", "dc_weight", "bc_weight"})
 
@@ -252,6 +255,10 @@ def temporal_metrics(
     for epoch_kernels in snapshots:
         G = build_digraph(epoch_kernels)
 
+        ec = nx.eigenvector_centrality(G, max_iter=1000, tol=1e-06, weight="weight")
+        dc = nx.degree_centrality(G)
+        bc = nx.betweenness_centrality(G)
+
         for layer_idx in range(n_hidden):
             prefix = f"h{layer_idx}"
             n_units = epoch_kernels[layer_idx].shape[1]
@@ -263,10 +270,6 @@ def temporal_metrics(
             concentration = np.array([sr[1] for sr in strength_rho], dtype=float)
             per_layer[layer_idx][0].append(strength)
             per_layer[layer_idx][2].append(concentration)
-
-            ec = nx.eigenvector_centrality(G, max_iter=1000, tol=1e-06, weight="weight")
-            dc = nx.degree_centrality(G)
-            bc = nx.betweenness_centrality(G, weight="weight")
 
             ec_vals = np.array([ec.get(f"{prefix}_{j}", 0.0) for j in range(n_units)])
             dc_vals = np.array([dc.get(f"{prefix}_{j}", 0.0) for j in range(n_units)])

@@ -31,7 +31,10 @@ from sklearn.preprocessing import StandardScaler
 from tensorflow.keras.models import Sequential
 from tqdm.auto import tqdm
 
-from utils.logging_utils import log_or_print, setup_logger
+try:
+    from utils.logging_utils import log_or_print, setup_logger
+except ImportError:
+    from src.utils.logging_utils import log_or_print, setup_logger
 
 _NUMERIC_METRIC_KEYS = (
     "loss",

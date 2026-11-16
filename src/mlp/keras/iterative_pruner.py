@@ -971,7 +971,8 @@ def _degraded(
         True if the degradation exceeds ``threshold``.
     """
 
-    return (new - best) > threshold if mode == "min" else (best - new) > threshold
+    # return (new - best) > threshold if mode == "min" else (best - new) > threshold
+    return (new - best) / abs(best) > threshold if mode == "min" else (best - new) / abs(best) > threshold
 
 
 def _snapshot_state(

@@ -1,0 +1,6 @@
+numpy
+pandas
+tensorflow
+scikit-learn
+networkx
+tqdm

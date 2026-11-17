@@ -147,6 +147,19 @@ def main():
     print(result.history_df().to_string(index=False))
     print(pd.DataFrame([iterative_post]).to_string(index=False))
 
+    # --- Save everything to one CSV ---
+    results = pd.concat(
+        [
+            pd.DataFrame([oneshot_pre, oneshot_post]),
+            result.history_df(),
+            pd.DataFrame([iterative_post]),
+        ],
+        ignore_index=True,
+    )
+    out_path = "mnist_mlp_pruning_results.csv"
+    results.to_csv(out_path, index=False)
+    print(f"\nSaved all results to {out_path}")
+
 
 if __name__ == "__main__":
     main()

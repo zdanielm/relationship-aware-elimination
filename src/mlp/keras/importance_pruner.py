@@ -670,10 +670,15 @@ def reconstruct(
             kwargs["input_shape"] = (input_dim,)
         new_layer = Dense(**kwargs)
         new_model.add(new_layer)
-        new_model.layers[-1].build(
-            (None, input_dim) if i == 0 else (None, int(np.sum(alive_masks[i - 1])))
-        )
-        new_model.layers[-1].set_weights([W_new, b_new])
+        # Keras 3 Sequential.add() may already build the layer (it does so
+        # whenever the previous layer's output shape is known). Rebuilding a
+        # built layer raises "You cannot add new elements of state...", so
+        # only build it ourselves when Keras has not done it already.
+        if not new_layer.built:
+            new_layer.build(
+                (None, input_dim) if i == 0 else (None, int(np.sum(alive_masks[i - 1])))
+            )
+        new_layer.set_weights([W_new, b_new])
 
     W_out_old, b_out_old = output_layer.get_weights()
     last_keep = np.where(alive_masks[-1])[0]
@@ -681,7 +686,8 @@ def reconstruct(
     out_activation = output_layer.get_config().get("activation", "sigmoid")
     out_units = output_layer.get_config()["units"]
     new_model.add(Dense(out_units, activation=out_activation, name="output"))
-    new_model.layers[-1].build((None, len(last_keep)))
+    if not new_model.layers[-1].built:
+        new_model.layers[-1].build((None, len(last_keep)))
     new_model.layers[-1].set_weights([W_out_new, b_out_old])
 
     if compile_kwargs is not None:

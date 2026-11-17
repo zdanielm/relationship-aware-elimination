@@ -811,7 +811,7 @@ def iterative_prune(
     if reconstruct_model:
         try:
             final_model = reconstruct(work)
-        except RuntimeError as exc:
+        except (RuntimeError, ValueError) as exc:
             log_or_print(
                 f"reconstruct() failed ({exc}); returning the unreconstructed model.",
                 level="warning",

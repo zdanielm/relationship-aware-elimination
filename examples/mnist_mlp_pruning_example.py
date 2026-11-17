@@ -1,5 +1,7 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from sklearn.metrics import confusion_matrix
 from tensorflow.keras import Sequential
 from tensorflow.keras.datasets import mnist
 from tensorflow.keras.layers import Dense
@@ -73,6 +75,29 @@ def evaluate(model, x, y, label):
     }
 
 
+def confusion_diff_plot(y_true, y_pred_pre, y_pred_post, num_labels, title, out_path):
+    cm_pre = confusion_matrix(y_true, y_pred_pre, labels=range(num_labels))
+    cm_post = confusion_matrix(y_true, y_pred_post, labels=range(num_labels))
+    diff = cm_post - cm_pre
+
+    fig, ax = plt.subplots(figsize=(7, 6))
+    vmax = int(np.abs(diff).max()) or 1
+    im = ax.imshow(diff, cmap="coolwarm", vmin=-vmax, vmax=vmax)
+    fig.colorbar(im, ax=ax, label="count change (final - pretrain)")
+    ax.set_xticks(range(num_labels))
+    ax.set_yticks(range(num_labels))
+    ax.set_xlabel("Predicted label")
+    ax.set_ylabel("True label")
+    ax.set_title(title)
+    for i in range(num_labels):
+        for j in range(num_labels):
+            if diff[i, j]:
+                ax.text(j, i, str(int(diff[i, j])), ha="center", va="center", fontsize=8)
+    fig.tight_layout()
+    fig.savefig(out_path, dpi=150)
+    plt.close(fig)
+
+
 def main():
     np.random.seed(SEED)
     import tensorflow as tf
@@ -94,6 +119,7 @@ def main():
         verbose=0,
     )
     oneshot_pre = evaluate(model, x_test, y_test, "oneshot_pre")
+    y_pred_pre = np.argmax(model.predict(x_test, verbose=0), axis=1)
 
     tracker = HiddenWeightTracker()
     model.fit(
@@ -159,6 +185,18 @@ def main():
     out_path = "mnist_mlp_pruning_results.csv"
     results.to_csv(out_path, index=False)
     print(f"\nSaved all results to {out_path}")
+
+    y_pred_final = np.argmax(result.model.predict(x_test, verbose=0), axis=1)
+    diff_path = "mnist_confusion_diff.png"
+    confusion_diff_plot(
+        y_test_int,
+        y_pred_pre,
+        y_pred_final,
+        num_labels,
+        f"Confusion matrix difference: final pruned ({iterative_post['sparsity_pct']}% sparse) - pretrain",
+        diff_path,
+    )
+    print(f"Saved confusion matrix difference to {diff_path}")
 
 
 if __name__ == "__main__":

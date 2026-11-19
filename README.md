@@ -6,7 +6,7 @@
 ******
 
 - Keras with Tensorflow backend **✅**
-- Iterative pruning **🚧**
+- Iterative pruning **🧪**
 - Keras 3.0, with PyTorch backend support **🚧**
 - Vanilla PyTorch support **🚧**
 
@@ -22,7 +22,8 @@
 *Legend:*
 **✅** *(Done)*
 **🚧** *(In Progress - Planned update)*
-🆕 *(New - Might still be under testing)*
+**🧪** *(Under heavy Testing)*
+🆕 *(New - Might still be unstable a bit)*
 *"K" (Keras)*
 *"PT" (PyTorch)*
 

@@ -16,7 +16,7 @@ from src.mlp.keras.importance_pruner import (
 )
 from src.mlp.keras.iterative_pruner import iterative_prune
 
-# --- MNIST MLP (same architecture as sandbox/MNIST_MLP.ipynb) ---
+# --- MNIST MLP model config ---
 HIDDEN_UNITS = 64
 BATCH_SIZE = 128
 PRE_PRUNE_EPOCHS = 20

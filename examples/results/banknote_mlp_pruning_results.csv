@@ -1,0 +1,10 @@
+model,loss,accuracy,sparsity_pct,round,phase,edge_sparsity,compile_metrics,granularity,fraction,target_sparsity,edges_removed
+oneshot_pre,0.0392,0.9855,0.0,,,,,,,,
+oneshot_post,0.003,1.0,48.6,,,,,,,,
+,0.0415,,,0.0,pretrain,0.0,0.9855,,,,
+,0.038,,,1.0,,0.244,0.9855,edges,0.244,0.244,531.0
+,0.0317,,,2.0,,0.392,0.9891,edges,0.1957,0.392,322.0
+,0.0272,,,3.0,,0.4683,0.9964,edges,0.125,0.468,166.0
+,0.0236,,,4.0,,0.4963,0.9964,edges,0.0521,0.496,61.0
+,0.0205,,,5.0,,0.5,0.9964,edges,0.0073,0.5,8.0
+iterative_post,0.0205,0.9964,48.6,,,,,,,,

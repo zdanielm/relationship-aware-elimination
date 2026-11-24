@@ -33,6 +33,7 @@ from collections.abc import Sequence
 import networkx as nx
 import numpy as np
 import tensorflow as tf
+from keras.saving import deserialize_keras_object
 from tensorflow.keras.layers import Dense, Input
 from tensorflow.keras.models import Sequential, clone_model
 
@@ -56,9 +57,7 @@ def restorable_compile_config(model: Sequential) -> dict[str, object]:
         entries = config.get(key)
         if entries:
             config[key] = [
-                tf.keras.saving.deserialize_keras_object(entry)
-                if isinstance(entry, dict)
-                else entry
+                deserialize_keras_object(entry) if isinstance(entry, dict) else entry
                 for entry in entries
             ]
     return config

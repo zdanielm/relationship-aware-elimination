@@ -55,6 +55,7 @@ try:
         compute_edge_importance,
         prune_neurons,
         reconstruct,
+        restorable_compile_config,
     )
     from utils.logging_utils import log_or_print
 except ImportError:
@@ -64,6 +65,7 @@ except ImportError:
         compute_edge_importance,
         prune_neurons,
         reconstruct,
+        restorable_compile_config,
     )
     from src.utils.logging_utils import log_or_print
 
@@ -599,7 +601,7 @@ def iterative_prune(
     if compile_kwargs is not None:
         work.compile(**compile_kwargs)
     else:
-        work.compile(**model.get_compile_config())
+        work.compile(**restorable_compile_config(model))
 
     dense = _dense_layers(work)
     hidden = dense[:-1]

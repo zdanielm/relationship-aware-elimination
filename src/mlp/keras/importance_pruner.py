@@ -44,6 +44,26 @@ except ImportError:
 _CENTRALITY_METRIC_KEYS = frozenset({"ec_weight", "dc_weight", "bc_weight"})
 
 
+def restorable_compile_config(model: Sequential) -> dict[str, object]:
+    """Return ``model.get_compile_config()`` fit for ``compile()`` reuse.
+
+    Keras 3 serializes metric objects (e.g. ``Precision``, ``AUC``) to plain
+    dicts in ``get_compile_config()``; ``compile()`` only accepts strings or
+    metric objects, so dict entries are deserialized back to objects here.
+    """
+    config = model.get_compile_config()
+    for key in ("metrics", "weighted_metrics"):
+        entries = config.get(key)
+        if entries:
+            config[key] = [
+                tf.keras.saving.deserialize_keras_object(entry)
+                if isinstance(entry, dict)
+                else entry
+                for entry in entries
+            ]
+    return config
+
+
 class HiddenWeightTracker(tf.keras.callbacks.Callback):
     """Records hidden-layer kernel snapshots during training.
 
@@ -693,7 +713,7 @@ def reconstruct(
     if compile_kwargs is not None:
         new_model.compile(**compile_kwargs)
     else:
-        cfg = model.get_compile_config()
+        cfg = restorable_compile_config(model)
         new_model.compile(**cfg)
 
     return new_model

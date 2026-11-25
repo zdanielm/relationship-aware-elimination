@@ -1,3 +1,4 @@
+import argparse
 import os
 
 import matplotlib.pyplot as plt
@@ -33,7 +34,7 @@ SEED = 1
 DATASET_DIR = "/dataset/stat/40"
 
 
-def load_secom():
+def load_secom(seed):
     if not os.path.exists(DATASET_DIR):
         snapshot_download(
             repo_id="zdanielm/secom_umap", repo_type="dataset", local_dir="/dataset/"
@@ -45,8 +46,8 @@ def load_secom():
     X = pd.concat([train_X, test_X])
     y = pd.concat([train_y, test_y])
     y = y["Pass/Fail"].map({-1: 0, 1: 1})
-    X, y = SMOTE(random_state=SEED).fit_resample(X, y)
-    return train_test_split(X, y, test_size=0.2, stratify=y, random_state=SEED)
+    X, y = SMOTE(random_state=seed).fit_resample(X, y)
+    return train_test_split(X, y, test_size=0.2, stratify=y, random_state=seed)
 
 
 def build_model(input_size):
@@ -112,13 +113,13 @@ def confusion_diff_plot(y_true, y_pred_pre, y_pred_post, num_labels, title, out_
     plt.close(fig)
 
 
-def main():
-    np.random.seed(SEED)
+def main(seed):
+    np.random.seed(seed)
     import tensorflow as tf
 
-    tf.random.set_seed(SEED)
+    tf.random.set_seed(seed)
 
-    train_X, test_X, train_y, test_y = load_secom()
+    train_X, test_X, train_y, test_y = load_secom(seed)
     scaler = StandardScaler()
     train_X = scaler.fit_transform(train_X)
     test_X = scaler.transform(test_X)
@@ -197,12 +198,13 @@ def main():
         ],
         ignore_index=True,
     )
+    results.insert(0, "seed", seed)
     out_path = "secom_mlp_pruning_results.csv"
     results.to_csv(out_path, mode='a', header=not os.path.exists(out_path), index=False)
     print(f"\nSaved all results to {out_path}")
 
     y_pred_final = (result.model.predict(test_X, verbose=0) > 0.5).astype(int).flatten()
-    diff_path = "secom_confusion_diff.png"
+    diff_path = f"secom_confusion_diff_seed{seed}.png"
     confusion_diff_plot(
         test_y,
         y_pred_pre,
@@ -215,4 +217,6 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--seed", type=int, default=SEED)
+    main(parser.parse_args().seed)

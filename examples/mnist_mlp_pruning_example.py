@@ -1,3 +1,4 @@
+import argparse
 import os
 
 import matplotlib.pyplot as plt
@@ -100,11 +101,11 @@ def confusion_diff_plot(y_true, y_pred_pre, y_pred_post, num_labels, title, out_
     plt.close(fig)
 
 
-def main():
-    np.random.seed(SEED)
+def main(seed):
+    np.random.seed(seed)
     import tensorflow as tf
 
-    tf.random.set_seed(SEED)
+    tf.random.set_seed(seed)
 
     x_train, y_train_int, x_test, y_test_int = load_mnist()
     num_labels = len(np.unique(y_train_int))
@@ -184,12 +185,13 @@ def main():
         ],
         ignore_index=True,
     )
+    results.insert(0, "seed", seed)
     out_path = "mnist_mlp_pruning_results.csv"
     results.to_csv(out_path, mode='a', header=not os.path.exists(out_path), index=False)
     print(f"\nSaved all results to {out_path}")
 
     y_pred_final = np.argmax(result.model.predict(x_test, verbose=0), axis=1)
-    diff_path = "mnist_confusion_diff.png"
+    diff_path = f"mnist_confusion_diff_seed{seed}.png"
     confusion_diff_plot(
         y_test_int,
         y_pred_pre,
@@ -202,4 +204,6 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--seed", type=int, default=SEED)
+    main(parser.parse_args().seed)

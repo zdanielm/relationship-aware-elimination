@@ -1,8 +1,10 @@
+import os
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn.metrics import confusion_matrix
-from tensorflow.keras import Sequential
+from tensorflow.keras import Input, Sequential
 from tensorflow.keras.datasets import mnist
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.regularizers import l2
@@ -37,11 +39,11 @@ def load_mnist():
 def build_model(input_size, num_labels):
     m = Sequential(
         [
+            Input(shape=(input_size,)),
             Dense(
                 HIDDEN_UNITS,
                 activation="relu",
                 kernel_regularizer=l2(0.001),
-                input_shape=(input_size,),
             ),
             Dense(
                 HIDDEN_UNITS,
@@ -183,7 +185,7 @@ def main():
         ignore_index=True,
     )
     out_path = "mnist_mlp_pruning_results.csv"
-    results.to_csv(out_path, index=False)
+    results.to_csv(out_path, mode='a', header=not os.path.exists(out_path), index=False)
     print(f"\nSaved all results to {out_path}")
 
     y_pred_final = np.argmax(result.model.predict(x_test, verbose=0), axis=1)

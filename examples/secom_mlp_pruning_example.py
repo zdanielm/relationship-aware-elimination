@@ -8,7 +8,7 @@ from imblearn.over_sampling import SMOTE
 from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from tensorflow.keras import Sequential
+from tensorflow.keras import Input, Sequential
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.metrics import AUC, Precision, Recall
 from tensorflow.keras.optimizers import Adam
@@ -52,7 +52,8 @@ def load_secom():
 def build_model(input_size):
     m = Sequential(
         [
-            Dense(32, activation="relu", input_shape=(input_size,)),
+            Input(shape=(input_size,)),
+            Dense(32, activation="relu"),
             Dense(64, activation="relu"),
             Dense(32, activation="relu"),
             Dense(1, activation="sigmoid"),
@@ -197,7 +198,7 @@ def main():
         ignore_index=True,
     )
     out_path = "secom_mlp_pruning_results.csv"
-    results.to_csv(out_path, index=False)
+    results.to_csv(out_path, mode='a', header=not os.path.exists(out_path), index=False)
     print(f"\nSaved all results to {out_path}")
 
     y_pred_final = (result.model.predict(test_X, verbose=0) > 0.5).astype(int).flatten()
